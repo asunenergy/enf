@@ -1,0 +1,37 @@
+<?php
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // دریافت داده‌ها از درخواست
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    // آدرس ایمیل مقصد
+    $to = "asunenergy.co@gmail.com";
+    $subject = "اطلاعات مدیریت انرژی خورشیدی";
+    $headers = "From: no-reply@yourdomain.com\r\n";
+    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+
+    // ساخت متن ایمیل
+    $message = "اطلاعات کاربر:\n";
+    $message .= "نام و نام خانوادگی: " . $data['userInfo']['fullName'] . "\n";
+    $message .= "شماره تلفن: " . $data['userInfo']['phoneNumber'] . "\n";
+    $message .= "منطقه نصب: " . $data['userInfo']['region'] . "\n";
+    $message .= "محل نصب: " . $data['userInfo']['installationLocation'] . "\n";
+    $message .= "ابعاد محل نصب: " . $data['userInfo']['roofSize'] . "\n";
+    $message .= "شیب پشت‌بام: " . $data['userInfo']['roofSlope'] . "\n\n";
+
+    $message .= "اطلاعات دستگاه‌ها:\n";
+    foreach ($data['devices'] as $device) {
+        $message .= "- دسته‌بندی: " . $device['category'] . "\n";
+        $message .= "  دستگاه: " . $device['device'] . "\n";
+        $message .= "  تعداد: " . $device['quantity'] . "\n";
+        $message .= "  توان: " . ($device['power'] ?? 'نامشخص') . " وات\n";
+        $message .= "  ساعات مصرف: " . ($device['hours'] ?? 'نامشخص') . " ساعت\n\n";
+    }
+
+    // ارسال ایمیل
+    if (mail($to, $subject, $message, $headers)) {
+        echo json_encode(['status' => 'success', 'message' => 'اطلاعات ارسال شد.']);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'ارسال ایمیل ناموفق بود.']);
+    }
+}
+?>

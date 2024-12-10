@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدیریت انرژی خورشیدی</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            text-align: right;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .container {
+            width: 90%;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .report {
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>مدیریت انرژی خورشیدی</h1>
+        
+        <!-- اطلاعات کاربر -->
+        <form id="userForm">
+            <h2>اطلاعات کاربر</h2>
+            <label for="fullName">نام و نام خانوادگی:</label>
+            <input type="text" id="fullName" required>
+
+            <label for="phoneNumber">شماره تلفن:</label>
+            <input type="text" id="phoneNumber" required>
+
+            <label for="region">منطقه نصب نیروگاه:</label>
+            <input type="text" id="region" required>
+
+            <label for="installationLocation">محل نصب نیروگاه (زمین/پشت‌بام):</label>
+            <input type="text" id="installationLocation" required>
+
+            <label for="roofSize">ابعاد محل نصب (مترمربع):</label>
+            <input type="text" id="roofSize" required>
+
+            <label for="roofSlope">شیب پشت‌بام (اختیاری):</label>
+            <input type="text" id="roofSlope">
+
+            <button type="button" onclick="saveUserInfo()">ذخیره اطلاعات</button>
+        </form>
+
+        <!-- افزودن دستگاه -->
+        <form id="deviceForm" style="display:none;">
+            <h2>افزودن دستگاه</h2>
+            <label for="category">دسته‌بندی:</label>
+            <select id="category" onchange="updateDevices()">
+                <option value="">انتخاب کنید</option>
+                <option value="روشنایی داخلی">روشنایی داخلی</option>
+                <option value="روشنایی بیرونی">روشنایی بیرونی</option>
+                <option value="تلویزیون LED">تلویزیون LED</option>
+                <option value="تلویزیون LCD">تلویزیون LCD</option>
+                <option value="تلویزیون قدیمی">تلویزیون قدیمی</option>
+                <option value="وسایل آشپزخانه">وسایل آشپزخانه</option>
+                <option value="یخچال خانگی">یخچال خانگی</option>
+                <option value="یخچال صنعتی">یخچال صنعتی</option>
+                <option value="سیستم سرمایشی و گرمایشی">سیستم سرمایشی و گرمایشی</option>
+                <option value="دوربین مدار بسته">دوربین مدار بسته</option>
+                <option value="دزدگیر">دزدگیر</option>
+                <option value="کنسول بازی">کنسول بازی</option>
+                <option value=" موبایل">موبایل</option>
+                <option value="دلخواه">دلخواه</option>
+            </select>
+
+            <div id="customDeviceInputs" style="display:none;">
+                <label for="customDeviceName">نام دستگاه:</label>
+                <input type="text" id="customDeviceName">
+            </div>
+
+            <label for="device">دستگاه:</label>
+            <select id="device"></select>
+
+            <label for="quantity">تعداد:</label>
+            <input type="number" id="quantity" required>
+
+            <label for="power">توان دستگاه (اختیاری):</label>
+            <input type="number" id="power">
+
+            <label for="hours">ساعات مصرف (اجباری):</label>
+            <input type="number" id="hours" required>
+
+            <button type="button" onclick="saveDevice()">ذخیره دستگاه</button>
+        </form>
+
+        <!-- گزارش اطلاعات -->
+        <div class="report">
+            <h2>گزارش اطلاعات</h2>
+            <table id="reportTable">
+                <thead>
+                    <tr>
+                        <th>دسته‌بندی</th>
+                        <th>دستگاه</th>
+                        <th>تعداد</th>
+                        <th>توان</th>
+                        <th>ساعات مصرف</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+            <button onclick="downloadReport()">ذخیره گزارش</button>
+        </div>
+    </div>
+
+    <script>
+        const categories = {
+            "روشنایی داخلی": ["لامپ سقفی", "آباژور", "نوار زیر کابینت", "چراغ دیواری", "چراغ مطالعه", "نورپردازی دکوراتیو"],
+            "روشنایی بیرونی": ["چراغ پایه‌دار", "چراغ دیواری", "پروژکتور", "چراغ خیابانی"],
+            "تلویزیون LED": ["24 اینچ", "32 اینچ", "40 اینچ", "43 اینچ", "50 اینچ", "55 اینچ", "65 اینچ"],
+            "تلویزیون LCD": ["24 اینچ", "32 اینچ", "40 اینچ", "43 اینچ", "50 اینچ", "55 اینچ", "65 اینچ"],
+            "تلویزیون قدیمی": ["کوچک", "متوسط", "بزرگ"],
+            "وسایل آشپزخانه": ["ماکروفر", "توستر", "مخلوط کن", "سماور", "پلوپز"],
+            "یخچال خانگی": ["هتلی 3 فوت", "هتلی 5 فوت", "تک درب", "دو درب", "فریزر بالا یا پایین", "ساید کوچک", "ساید متوسط", "ساید بزرگ"],
+            "یخچال صنعتی": ["ویترینی", "ایستاده", "فروشگاهی"],
+            "سیستم سرمایشی و گرمایشی": ["کولر آبی", "کولر گازی", "چیلر", "فن کویل", "اسپلیت", "پنکه", "هیتر برقی", "بخاری برقی"],
+            "دوربین مدار بسته": ["آنالوگ ساده", "آنالوگ با IR", "IP ثابت", "IP با IR", "IP PTZ", "صنعتی ثابت", "صنعتی PTZ", "حرارتی", "ضد انفجار"],
+            "دزدگیر": ["سیمی ساده", "هوشمند", "سیمی صنعتی", "پیشرفته صنعتی"],
+            "کنسول بازی": ["PlayStation 4", "PlayStation 5", "Xbox One", "Xbox Series X", "Nintendo Switch", "PC Gaming"],
+            " موبایل": ["شارژر معمولی", "شارژر سریع", "شارژر فوق سریع"]
+        };
+
+        const userInfo = {};
+        const devices = [];
+
+        function saveUserInfo() {
+            userInfo.fullName = document.getElementById('fullName').value;
+            userInfo.phoneNumber = document.getElementById('phoneNumber').value;
+            userInfo.region = document.getElementById('region').value;
+            userInfo.installationLocation = document.getElementById('installationLocation').value;
+            userInfo.roofSize = document.getElementById('roofSize').value;
+            userInfo.roofSlope = document.getElementById('roofSlope').value || 'نامشخص';
+
+            alert("اطلاعات کاربر ذخیره شد.");
+            document.getElementById('userForm').style.display = 'none';
+            document.getElementById('deviceForm').style.display = 'block';
+        }
+
+        function updateDevices() {
+            const category = document.getElementById('category').value;
+            const deviceSelect = document.getElementById('device');
+            const customDeviceInputs = document.getElementById('customDeviceInputs');
+            deviceSelect.innerHTML = '';
+            if (category === "دلخواه") {
+                customDeviceInputs.style.display = 'block';
+                document.getElementById('hours').disabled = false;
+            } else {
+                customDeviceInputs.style.display = 'none';
+                if (categories[category]) {
+                    categories[category].forEach(device => {
+                        const option = document.createElement('option');
+                        option.value = device;
+                        option.textContent = device;
+                        deviceSelect.appendChild(option);
+                    });
+                }
+                if (category === "یخچال خانگی" || category === "یخچال صنعتی") {
+                    document.getElementById('hours').disabled = true;
+                } else {
+                    document.getElementById('hours').disabled = false;
+                }
+            }
+        }
+
+        function saveDevice() {
+            const category = document.getElementById('category').value;
+            const device = category === "دلخواه" ? document.getElementById('customDeviceName').value : document.getElementById('device').value;
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const power = parseInt(document.getElementById('power').value) || null;
+            const hours = document.getElementById('hours').disabled ? null : parseInt(document.getElementById('hours').value);
+
+            devices.push({ category, device, quantity, power, hours });
+            updateReport();
+        }
+
+        function updateReport() {
+            const tableBody = document.getElementById('reportTable').querySelector('tbody');
+            tableBody.innerHTML = '';
+            devices.forEach(device => {
+                const row = document.createElement('tr');
+                Object.values(device).forEach(value => {
+                    const cell = document.createElement('td');
+                    cell.textContent = value;
+                    row.appendChild(cell);
+                });
+                tableBody.appendChild(row);
+            });
+        }
+
+        function downloadReport() {
+            const data = devices.map(device => Object.values(device).join(",")).join("\n");
+            const blob = new Blob([data], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'report.csv';
+            link.click();
+        }
+
+	function sendEmail() {
+    const data = { userInfo, devices };
+    fetch('sendMail.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.status === 'success') {
+            alert('اطلاعات با موفقیت ارسال شد.');
+        } else {
+            alert('خطا در ارسال اطلاعات: ' + result.message);
+        }
+    })
+    .catch(error => {
+        alert('خطا در ارسال به سرور: ' + error.message);
+    });
+}
+
+    </script>
+</body>
+</html>
